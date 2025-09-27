@@ -24,8 +24,8 @@ DEFAULT_TZ = tz.gettz("America/New_York")
 IN_THE_SKY_ICS = "https://in-the-sky.org/newscalyear_ical.php?maxdiff=7&year={year}"
 
 KEYWORDS = (
-    "meteor shower"
-    "eclipse",      #solar or lunar
+    "meteor shower",
+    "eclipse"      #solar or lunar
 )
 
 def now_local() -> dt.datetime:
@@ -53,7 +53,12 @@ def extract_meteors_eclipses(cal: Calendar, horizon_days: int):
         lname = name.lower()
         if not any(k in lname for k in KEYWORDS):
             continue
-        start = start=astimezone(DEFAULT_TZ)
+
+        start = ev.begin.datetime if ev.begin else None
+        if not start:
+            continue
+
+        start = start.astimezone(DEFAULT_TZ)
         if start < now_local() or start > cutoff:
             continue
         etype = "Meteor Shower"  if "meteor shower" in lname else ("Eclipse" if "eclipse" in lname else "Event")
@@ -67,7 +72,7 @@ def extract_meteors_eclipses(cal: Calendar, horizon_days: int):
     out.sort(key=lambda e: e["start"])
     return out
 
-def fetch_iss_passes(lat: float, lon: float, alt_m: int, days: int, min_elev: int = 30):
+def fetch_iss_passes(lat: float, lon: float, alt_m: int, days: int, min_elev: int = 10):
     """
     Get visible ISS passes for your location using N2YO.
     min_elev filters out low, meh passes (30 degrees = decent).
@@ -77,7 +82,7 @@ def fetch_iss_passes(lat: float, lon: float, alt_m: int, days: int, min_elev: in
     if not api_key:
         return [] # no key set; skip quietly
     
-    url = f"{N2YO_BASE}/{ISS_NORAD}/{lat: .4f}/{lon: .4f}/{alt_m}/{days}/{min_elev}/&apiKey={api_key}"
+    url = f"{N2YO_BASE}/{ISS_NORAD}/{lat:.4f}/{lon:.4f}/{alt_m}/{days}/{min_elev}/&apiKey={api_key}"
     try: 
         r = requests.get(url, timeout=30)
         r.raise_for_status()
@@ -139,7 +144,7 @@ def main():
     if all_events:
         for e in all_events:
             when = e["start"].strftime("%a %b %d, %I:%M %p %Z")
-            print(f"- {e['type']}: {e['namee']} - {when}")
+            print(f"- {e['type']}: {e['name']} - {when}")
     else:
         print("- None found in range")
 

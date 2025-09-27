@@ -161,7 +161,7 @@ def main():
         print("- None found or N2YO_API_KEY not set.")
 
     # 3) Leave a hook where the next pieces will snap in
-    print("\nNext up -> meteor showers & eclipses feed...")
+    print("\nNext up -> Windows toast notifications so you get popups when something’s coming up")
 
 if __name__ == "__main__":
     raise SystemExit(main()) 

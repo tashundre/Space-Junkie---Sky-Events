@@ -67,6 +67,46 @@ def extract_meteors_eclipses(cal: Calendar, horizon_days: int):
     out.sort(key=lambda e: e["start"])
     return out
 
+def fetch_iss_passes(lat: float, lon: float, alt_m: int, days: int, min_elev: int = 30):
+    """
+    Get visible ISS passes for your location using N2YO.
+    min_elev filters out low, meh passes (30 degrees = decent).
+    Returns a list of dicts sorted by start time. 
+    """
+    api_key = os.environ.get("N2YO_API_KEY")
+    if not api_key:
+        return [] # no key set; skip quietly
+    
+    url = f"{N2YO_BASE}/{ISS_NORAD}/{lat: .4f}/{lon: .4f}/{alt_m}/{days}/{min_elev}/&apiKey={api_key}"
+    try: 
+        r = requests.get(url, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+    except Exception:
+        return[]
+    
+    passes = data.get("passes", []) or []
+    out = []
+    for p in passes:
+        start_utc = dt.datetime.fromtimestamp(p.get("startUTC", 0), tz=dt.timezone.utc)
+        end_utc = dt.datetime.fromtimestamp(p.get("endUTC", 0), tz=dt.timezone.utc)
+        start = start_utc.astimezone(DEFAULT_TZ)
+        end = end_utc.astimezone(DEFAULT_TZ)
+        max_el = int(p.get("maxEl", 0))
+        mag = p.get("mag", None)
+
+        out.append({
+            "type": "ISS Pass",
+            "name": f"ISS visible pass (max elev ~{max_el}°)",
+            "start": start,
+            "end": end,
+            "mag": mag,
+            "source": "N2YO"
+        })
+
+    out.sort(key=lambda e: e["start"])
+    return out
+
 def main():
     # 1) CLI: we keep it explicit-no magic guesses. 
     ap = argparse.ArgumentParser(description="Sky Events - Starlace Build")

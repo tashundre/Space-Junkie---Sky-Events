@@ -143,6 +143,18 @@ def main():
     else:
         print("- None found in range")
 
+    # --- ISS Passes ---
+    iss_events = fetch_iss_passes(args.lat, args.lon, args.alt, args.days)
+    print("\nISS passes:")
+    if iss_events:
+        for e in iss_events:
+            start = e["start"].strftime("%a %b %d, %I:%M %p %Z")
+            end = e["end"].strftime("%I:%M %p %Z")
+            extra = f" (mag {e['mag']})" if e.get('mag') is not None else ""
+            print(f"- {e['name']} - {start} -> {end}{extra}")
+    else:
+        print("- None found or N2YO_API_KEY not set.")
+
     # 3) Leave a hook where the next pieces will snap in
     print("\nNext up -> meteor showers & eclipses feed...")
 

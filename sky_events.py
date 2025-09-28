@@ -15,37 +15,18 @@ from ics import Calendar
 import pytz
 import os
 
-# optional Windows toast notifications
-try:
-    from win10toast import ToastNotifier
-    TOASTER = ToastNotifier()
-except Exception:
-    TOASTER = None
-
+# --- Windows notifications (winotify only) ---
 try:
     from winotify import Notification
-    def notify_winotify(title: str, body: str):
+    def notify(title: str, body: str):
         n = Notification(app_id="SkyEvents",
                         title=title,
                         msg=body,
-                        duration="short")
-        n.show
+                        duration="short").show()
 except Exception:
-    def notify_winotify(title: str, body: str):
-        raise RuntimeError("Winotify unavaliable")
-
-def notify(title: str, body: str):
-    # Prefer winotify; fall back to win10toast non-threaded
-    try: 
-        notify_winotify(title, body)
-        return
-    except Exception:
+    # Fallback: no-op if  winotify isnt avaliable
+    def notify(title: str, body: str):
         pass
-    if TOASTER: 
-        try: 
-            TOASTER.show_toast(title, body, duration=8, threaded=False)
-        except Exception:
-            pass
 
 N2YO_BASE = "https://api.n2yo.com/rest/v1/satellite/visualpasses"
 ISS_NORAD = 25544
@@ -112,7 +93,7 @@ def fetch_iss_passes(lat: float, lon: float, alt_m: int, days: int, min_elev: in
     """
     api_key = os.environ.get("N2YO_API_KEY")
     if not api_key:
-        return [] # no key set; skip quietly
+        return[] # no key set; skip quietly
     
     url = f"{N2YO_BASE}/{ISS_NORAD}/{lat:.4f}/{lon:.4f}/{alt_m}/{days}/{min_elev}/&apiKey={api_key}"
     try: 
@@ -195,17 +176,16 @@ def main():
         print("- None found or N2YO_API_KEY not set.")
 
      # --- Optional notifications ---
-     if args.notify:
+    if args.notify:
         upcoming = (all_events + iss_events)
         upcoming.sort(key=lambda e: e["start"])
         for e in upcoming[:2]:
             title = "Sky Event"
             when = e["start"].strftime("%a %b %d, %I:%M %p %Z")
-            body = f"e{['type']}: {e['name']} at {when}"
+            body = f"{e['type']}: {e['name']} at {when}"
+            # debug print so you can see its being calles
+            print(f"[notify] {body}")
             notify(title, body)
-
-    # 3) Leave a hook where the next pieces will snap in
-    print("\nNext up -> Windows toast notifications so you get popups when something’s coming up")
 
 if __name__ == "__main__":
     raise SystemExit(main()) 

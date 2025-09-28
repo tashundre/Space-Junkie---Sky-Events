@@ -126,6 +126,8 @@ def main():
     ap.add_argument("--lon", type=float, required=True, help="Longitude (decimal degrees)")
     ap.add_argument("--alt", type=int, default=50, help="Altitude in meters (rough is fine)")
     ap.add_argument("--days", type=int, default=14, help="Lookahead horizon in days")
+    ap.add_argument("--notify", action="store_true",
+                    help="Show Windows toast notifications for the next upcoming events")
     args = ap.parse_args()
 
     # 2) Vibes + echo

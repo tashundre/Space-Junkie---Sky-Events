@@ -169,6 +169,19 @@ def main():
     else:
         print("- None found or N2YO_API_KEY not set.")
 
+     # --- Optional toast for the next 1-2 events ---
+    if args.notify and TOASTER:
+        upcoming = (all_events + iss_events)
+        upcoming.sort(key=lambda e: e["start"])
+        for e in upcoming[:2]:  # toast at most two events to keep it sane
+            title = "Sky Event"
+            when = e["start"].strftime("%a %b %d, %I:%M %p %Z")
+            body = f"{e['type']}: {e['name']} at {when}"
+            try:
+                TOASTER.show_toast(title, body, duration=8, threaded=True)
+            except Exception:
+                pass
+
     # 3) Leave a hook where the next pieces will snap in
     print("\nNext up -> Windows toast notifications so you get popups when something’s coming up")
 

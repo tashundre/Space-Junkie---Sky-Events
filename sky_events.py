@@ -15,6 +15,13 @@ from ics import Calendar
 import pytz
 import os
 
+# optional Windows toast notifications
+try:
+    from win10toast import ToastNotifier
+    TOASTER = ToastNotifier()
+except Exception:
+    TOASTER = None
+
 N2YO_BASE = "https://api.n2yo.com/rest/v1/satellite/visualpasses"
 ISS_NORAD = 25544
 

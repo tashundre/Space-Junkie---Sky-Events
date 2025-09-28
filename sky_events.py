@@ -22,6 +22,31 @@ try:
 except Exception:
     TOASTER = None
 
+try:
+    from winotify import Notification
+    def notify_winotify(title: str, body: str):
+        n = Notification(app_id="SkyEvents",
+                        title=title,
+                        msg=body,
+                        duration="short")
+        n.show
+except Exception:
+    def notify_winotify(title: str, body: str):
+        raise RuntimeError("Winotify unavaliable")
+
+def notify(title: str, body: str):
+    # Prefer winotify; fall back to win10toast non-threaded
+    try: 
+        notify_winotify(title, body)
+        return
+    except Exception:
+        pass
+    if TOASTER: 
+        try: 
+            TOASTER.show_toast(title, body, duration=8, threaded=False)
+        except Exception:
+            pass
+
 N2YO_BASE = "https://api.n2yo.com/rest/v1/satellite/visualpasses"
 ISS_NORAD = 25544
 
@@ -169,18 +194,15 @@ def main():
     else:
         print("- None found or N2YO_API_KEY not set.")
 
-     # --- Optional toast for the next 1-2 events ---
-    if args.notify and TOASTER:
+     # --- Optional notifications ---
+     if args.notify:
         upcoming = (all_events + iss_events)
         upcoming.sort(key=lambda e: e["start"])
-        for e in upcoming[:2]:  # toast at most two events to keep it sane
+        for e in upcoming[:2]:
             title = "Sky Event"
             when = e["start"].strftime("%a %b %d, %I:%M %p %Z")
-            body = f"{e['type']}: {e['name']} at {when}"
-            try:
-                TOASTER.show_toast(title, body, duration=8, threaded=True)
-            except Exception:
-                pass
+            body = f"e{['type']}: {e['name']} at {when}"
+            notify(title, body)
 
     # 3) Leave a hook where the next pieces will snap in
     print("\nNext up -> Windows toast notifications so you get popups when something’s coming up")
